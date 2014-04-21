@@ -33,6 +33,10 @@
 	</tabs>
 	<adddeleteeditpagefields>
 		<columnitem>
+			<fielddescr>Disabled</fielddescr>
+			<fieldname>disableinterface</fieldname>
+		</columnitem>
+		<columnitem>
 			<fielddescr>Interface</fielddescr>
 			<fieldname>interface</fieldname>
 		</columnitem>
@@ -52,6 +56,17 @@
 		<executable>zebra</executable>
 	</service>
 	<fields>
+		<field>
+			<fielddescr>Disabled</fielddescr>
+			<fieldname>disableinterface</fieldname>
+			<description>Disable this interface (exclude from config).</description>
+			<type>select</type>
+				<options>
+				<option><name>yes</name><value>yes</value></option>
+				<option><name>no</name><value>no</value></option>
+				</options>
+			<default_value>no</default_value>
+		</field>
 		<field>
 			<fielddescr>Interface</fielddescr>
 			<fieldname>interface</fieldname>

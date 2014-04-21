@@ -102,50 +102,51 @@ function quagga_ospfd_install_conf() {
 
 		if ($config['installedpackages']['quaggaospfdinterfaces']['config']) {
 			foreach ($config['installedpackages']['quaggaospfdinterfaces']['config'] as $conf) {
-				$realif = get_real_interface($conf['interface']);
-				$conffile .= "interface {$realif}\n" ;
-				if (!empty($conf['metric'])) {
-					$conffile .= "  ip ospf cost {$conf['metric']}\n";
+				if ($conf['disableinterface']=='no') {
+					$realif = get_real_interface($conf['interface']);
+					$conffile .= "interface {$realif}\n" ; 
+					if (!empty($conf['metric'])) {
+						$conffile .= "  ip ospf cost {$conf['metric']}\n";
+					}
+					if (!empty($conf['hellointervalinseconds'])) {
+						$conffile .= "  ip ospf hello-interval {$conf['hellointervalinseconds']}\n";
+					}
+					if ($conf['md5password'] && !empty($conf['password'])) {
+						$conffile .= "  ip ospf authentication message-digest\n";
+						$conffile .= "  ip ospf message-digest-key 1 md5 " . substr($conf['password'], 0, 15) . "\n";
+					} else if (!empty($conf['password'])) {
+						$conffile .= "  ip ospf authentication-key " . substr($conf['password'], 0, 8) . "\n";
+					}
+					if (!empty($conf['routerpriorityelections'])) {
+						$conffile .= "  ip ospf priority {$conf['routerpriorityelections']}\n";
+					}
+					if (!empty($conf['retransmitinterval'])) {
+						$conffile .= "  ip ospf retransmit-interval {$conf['retransmitinterval']}\n";
+					}
+					if ($conf['enablefasthello']=='on') {
+						$conffile .= "  ip ospf dead-interval minimal hello-multiplier {$conf['hellomultiplier']}\n";
+					} else if (!empty($conf['deadtimer'])) {
+						$conffile .= "  ip ospf dead-interval {$conf['deadtimer']}\n";
+					}
+					if (!empty($conf['passive'])) {
+						$passive_interfaces[] = $realif;
+					}
+					$interface_ip = find_interface_ip($realif);
+					$interface_subnet = find_interface_subnet($realif);
+					/* Cheap hack since point-to-points won't attach if /32 is used. */
+					if ($interface_subnet == 32)
+						$interface_subnet = 30;
+					$subnet = gen_subnet($interface_ip, $interface_subnet);
+					if (!empty($conf['acceptfilter'])) {
+						$noaccept .= "ip prefix-list ACCEPTFILTER deny {$subnet}/{$interface_subnet}\n";
+					}
+					if (!empty($conf['interfacearea'])) {
+						$interface_networks[] = array( "subnet" => "{$subnet}/{$interface_subnet}", "area" => $conf['interfacearea']);
+					}
+					else {
+						$interface_networks[] = array( "subnet" => "{$subnet}/{$interface_subnet}", "area" => $ospfd_conf['area']);
+					}
 				}
-				if (!empty($conf['hellointervalinseconds'])) {
-					$conffile .= "  ip ospf hello-interval {$conf['hellointervalinseconds']}\n";
-				}
-				if ($conf['md5password'] && !empty($conf['password'])) {
-					$conffile .= "  ip ospf authentication message-digest\n";
-					$conffile .= "  ip ospf message-digest-key 1 md5 " . substr($conf['password'], 0, 15) . "\n";
-				} else if (!empty($conf['password'])) {
-					$conffile .= "  ip ospf authentication-key " . substr($conf['password'], 0, 8) . "\n";
-				}
-				if (!empty($conf['routerpriorityelections'])) {
-					$conffile .= "  ip ospf priority {$conf['routerpriorityelections']}\n";
-				}
-				if (!empty($conf['retransmitinterval'])) {
-					$conffile .= "  ip ospf retransmit-interval {$conf['retransmitinterval']}\n";
-				}
-				if ($conf['enablefasthello']=='on') {
-					$conffile .= "  ip ospf dead-interval minimal hello-multiplier {$conf['hellomultiplier']}\n";
-				} else if (!empty($conf['deadtimer'])) {
-					$conffile .= "  ip ospf dead-interval {$conf['deadtimer']}\n";
-				}
-				if (!empty($conf['passive'])) {
-					$passive_interfaces[] = $realif;
-				}
-				$interface_ip = find_interface_ip($realif);
-				$interface_subnet = find_interface_subnet($realif);
-				/* Cheap hack since point-to-points won't attach if /32 is used. */
-				if ($interface_subnet == 32)
-					$interface_subnet = 30;
-				$subnet = gen_subnet($interface_ip, $interface_subnet);
-				if (!empty($conf['acceptfilter'])) {
-					$noaccept .= "ip prefix-list ACCEPTFILTER deny {$subnet}/{$interface_subnet}\n";
-				}
-				if (!empty($conf['interfacearea'])) {
-					$interface_networks[] = array( "subnet" => "{$subnet}/{$interface_subnet}", "area" => $conf['interfacearea']);
-				}
-				else {
-					$interface_networks[] = array( "subnet" => "{$subnet}/{$interface_subnet}", "area" => $ospfd_conf['area']);
-				}
-				
 
 
  			}
